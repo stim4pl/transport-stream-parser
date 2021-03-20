@@ -146,8 +146,8 @@ protected:
     bool SP;
     bool TPD;
     bool AFExt;
-    double PCR_data;
-    uint64_t OPCR_data;
+    long long int PCR_data;
+    long long int OPCR_data;
 
 public:
 //Adaptation Field Parser
@@ -165,14 +165,16 @@ public:
         {
             uint64_t tmp = xSwapBytes64(*((uint64_t*)&Input[6]));
             uint64_t basic = (tmp & 0xFFFFFFFF80000000) >> 31;
-            uint64_t extension = (tmp & 0x3F0000) >> 16;
-            int basic_int = basic;
-            int extension_int= extension;
-            double x = basic_int * 300 + extension_int;
-            //cout << endl << "To jest wynik" << x/27000 << endl;
-            PCR_data = x / 27000;
-            //cout << "to jest basic " <<basic << " to jest extension " << extension  << " ";
+            uint64_t extension = (tmp & 0x1FF0000) >> 16;
+            PCR_data = basic * 300 + extension;
         }
+        if(getOPCR())
+        {
+            uint64_t tmp = xSwapBytes64(*((uint64_t*)&Input[6 + getPCR() * 6]));
+            OPCR_data = (tmp & 0xFFFFFFFFFFFF0000) >> 16;
+        }
+
+
     }
 //Get value
     uint8_t getAFLength() const { return AFLength; }
@@ -184,7 +186,8 @@ public:
     bool getSP() const { return SP; }
     bool getTPD() const { return TPD; }
     bool getAFExt() const { return AFExt; }
-    double getPCR_data() const { return PCR_data; }
+    int getPCR_data() const { return PCR_data; }
+    int getOPCR_data() const { return OPCR_data; }
 //Printer
     void Print() const {
         //printf("AF: ");
@@ -218,7 +221,12 @@ public:
         if(getPCR())
         {
             cout << "PCR=";
-            printf("%f ", getPCR_data());
+            printf("%lld ", getPCR_data());
+        }
+        if(getOPCR())
+        {
+            cout << "OPCR=";
+            printf("%lld ", getOPCR_data());
         }
     }
 };
