@@ -1,7 +1,7 @@
 #include "tsCommon.h"
 #include "tsTransportStream.h"
 #include <fstream>
-#include <iostream>
+//#include <iostream>
 using namespace std;
 int main( int argc, char *argv[ ], char *envp[ ])
 {
@@ -10,6 +10,7 @@ int main( int argc, char *argv[ ], char *envp[ ])
     stream.open("scr/input_files/example_new.ts", ios::in | ios::binary);
     uint8_t packetBuffer[TS::TS_PacketLength];
     TS_PacketHeader  PacketHeader;
+    TS_AdaptationField PacketAdaptationField;
     int32_t PacketId = 0;
     if(!stream.good())
     {
@@ -20,12 +21,23 @@ int main( int argc, char *argv[ ], char *envp[ ])
     while(!stream.eof())
     {
         stream.read((char*)packetBuffer,TS::TS_PacketLength);
-        // TODO - read from file
-
         //TS_PacketHeader.Reset();
+        //Parse Packet Header
         PacketHeader.Parse(packetBuffer);
+
+        //Print data Header
         printf("%010d ", PacketId);
         PacketHeader.Print();
+
+        //Check Adaptation Field Control
+        if (PacketHeader.hasAdaptationField())
+        {
+            //Parse Packet Adaptation Field
+            PacketAdaptationField.Parse(packetBuffer);
+            //Print data Adaptation Field
+            PacketAdaptationField.Print();
+        }
+
         printf("\n");
 
         PacketId++;

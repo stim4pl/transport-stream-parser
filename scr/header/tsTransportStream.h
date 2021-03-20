@@ -1,7 +1,8 @@
 #pragma once
 #include "tsCommon.h"
 #include <string>
-
+#include <iostream>
+using namespace std;
 /*
 MPEG-TS packet:
 `        3                   2                   1                   0  `
@@ -40,9 +41,7 @@ class TS
 public:
   static constexpr uint32_t TS_PacketLength = 188;
   static constexpr uint32_t TS_HeaderLength = 4;
-
   static constexpr uint32_t PES_HeaderLength = 6;
-
   static constexpr uint32_t BaseClockFrequency_Hz         =    90000; //Hz
   static constexpr uint32_t ExtendedClockFrequency_Hz     = 27000000; //Hz
   static constexpr uint32_t BaseClockFrequency_kHz        =       90; //kHz
@@ -78,6 +77,7 @@ protected:
 
 public:
   //void     Reset();
+//Packt Header Parser
     void Parse(const uint8_t* Input)
     {
         uint32_t header = _byteswap_ulong(*((uint32_t*)Input));
@@ -91,41 +91,135 @@ public:
         adaptation_field_control = (header & 0x00000030) >> 4;	//2 bits
         continuity_counter = (header & 0x00000000F);		//4 bits
     }
-
+//Pinter
     void Print() const
     {
-        printf("TS: ");
-        printf("SB=");
+        cout << "TS: ";
+        cout << "SB=";
         printf("%d ", getSyncByte());
-        printf("E=");
+        cout << "E=";
+        //printf("E=");
         printf("%d ", getTransportErrorIndicator());
-        printf("S=");
+        cout << "S=";
         printf("%d ", getPayloadUnitStartIndicator());
-        printf("F=");
+        cout << "F=";
         printf("%d ", getTransportPriority());
-        printf("PID=");
+        cout << "PID=";
         printf("%d ", getPID());
-        printf("TSC=");
+        cout << "TSC=";
         printf("%d ", getTransportScramblingControl());
-        printf("AF=");
+        cout << "AF=";
         printf("%d ", getAdaptationFieldControl());
-        printf("CC=");
+        cout << "CC=";
         printf("%d ", getContinuityCounter());
     }
-    public:
-        uint8_t getSyncByte() const { return sync_byte; }
-        bool getTransportErrorIndicator() const { return transport_error_indicator; }
-        bool getPayloadUnitStartIndicator() const { return payload_unit_start_indicator; }
-        bool getTransportPriority() const { return transport_priority; }
-        uint16_t getPID() const { return PID; }
-        uint8_t getTransportScramblingControl() const { return transport_scrambling_control; }
-        uint8_t getAdaptationFieldControl() const { return adaptation_field_control; }
-        uint8_t getContinuityCounter() const { return continuity_counter; }
+//Get value
+    uint8_t getSyncByte() const { return sync_byte; }
+    bool getTransportErrorIndicator() const { return transport_error_indicator; }
+    bool getPayloadUnitStartIndicator() const { return payload_unit_start_indicator; }
+    bool getTransportPriority() const { return transport_priority; }
+    uint16_t getPID() const { return PID; }
+    uint8_t getTransportScramblingControl() const { return transport_scrambling_control; }
+    uint8_t getAdaptationFieldControl() const { return adaptation_field_control; }
+    uint8_t getContinuityCounter() const { return continuity_counter; }
 
-    public:
-        //TODO
-        //bool     hasAdaptationField() const { /*TODO*/ }
-        //bool     hasPayload        () const { /*TODO*/ }
+public:
+    //TODO
+    bool hasAdaptationField() const {
+        if ((getAdaptationFieldControl() == 2) || (getAdaptationFieldControl() == 3))
+        {
+            return true;
+        }
+        return false;
+    }
+    //bool     hasPayload        () const { /*TODO*/ }
 };
 
+class TS_AdaptationField {
+protected:
+    uint8_t AFLength;
+    bool discontinuity_indicator;
+    bool random_access_indicator;
+    bool stream_priority_indicator;
+    bool PCR;
+    bool OPCR;
+    bool SP;
+    bool TPD;
+    bool AFExt;
+    double PCR_data;
+    uint64_t OPCR_data;
+
+public:
+//Adaptation Field Parser
+    void Parse(const uint8_t* Input) {
+        AFLength = Input[4];
+        discontinuity_indicator = (Input[5] & 0x80) >> 7;
+        random_access_indicator = (Input[5] & 0x40) >> 6;
+        stream_priority_indicator = (Input[5] & 0x20) >> 5;
+        PCR = (Input[5] & 0x10) >> 4;
+        OPCR = (Input[5] & 0x08) >> 3;
+        SP = (Input[5] & 0x04) >> 2;
+        TPD = (Input[5] & 0x02) >> 1;
+        AFExt = (Input[5] & 0x01);
+        if(getPCR())
+        {
+            uint64_t tmp = xSwapBytes64(*((uint64_t*)&Input[6]));
+            uint64_t basic = (tmp & 0xFFFFFFFF80000000) >> 31;
+            uint64_t extension = (tmp & 0x3F0000) >> 16;
+            int basic_int = basic;
+            int extension_int= extension;
+            double x = basic_int * 300 + extension_int;
+            //cout << endl << "To jest wynik" << x/27000 << endl;
+            PCR_data = x / 27000;
+            //cout << "to jest basic " <<basic << " to jest extension " << extension  << " ";
+        }
+    }
+//Get value
+    uint8_t getAFLength() const { return AFLength; }
+    bool getDC() const { return discontinuity_indicator; }
+    bool getRA() const { return random_access_indicator; }
+    bool getSPI() const { return stream_priority_indicator; }
+    bool getPCR() const { return PCR; }
+    bool getOPCR() const { return OPCR; }
+    bool getSP() const { return SP; }
+    bool getTPD() const { return TPD; }
+    bool getAFExt() const { return AFExt; }
+    double getPCR_data() const { return PCR_data; }
+//Printer
+    void Print() const {
+        //printf("AF: ");
+        //printf("L=");
+        cout << "AF: L=";
+        printf("%d ", getAFLength());
+        //printf("DC=");
+        cout << "DC=";
+        printf("%d ", getDC());
+        //printf("RA=");
+        cout << "RA=";
+        printf("%d ", getRA());
+        //printf("SP=");
+        cout << "SP=";
+        printf("%d ", getSPI());
+        //printf("PR=");
+        cout << "PR=";
+        printf("%d ", getPCR());
+        //printf("OR=");
+        cout << "OR=";
+        printf("%d ", getOPCR());
+        //printf("SP=");
+        cout << "SP=";
+        printf("%d ", getSP());
+        //printf("TP=");
+        cout << "TP=";
+        printf("%d ", getTPD());
+        //printf("EX=");
+        cout << "EX=";
+        printf("%d ", getAFExt());
+        if(getPCR())
+        {
+            cout << "PCR=";
+            printf("%f ", getPCR_data());
+        }
+    }
+};
 //=============================================================================================================================================================================
