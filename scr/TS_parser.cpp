@@ -36,6 +36,7 @@ int main( int argc, char *argv[ ], char *envp[ ])
             PacketAdaptationField.Parse(packetBuffer);
             //Print data Adaptation Field
             PacketAdaptationField.Print();
+            //printf("\n");
         }
 
         printf("\n");

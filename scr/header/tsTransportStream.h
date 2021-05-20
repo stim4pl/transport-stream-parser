@@ -148,11 +148,14 @@ protected:
     bool AFExt;
     long long int PCR_data;
     long long int OPCR_data;
+    double Time;
+    int Stuffing;
 
 public:
 //Adaptation Field Parser
     void Parse(const uint8_t* Input) {
         AFLength = Input[4];
+        Stuffing = AFLength - 1;
         discontinuity_indicator = (Input[5] & 0x80) >> 7;
         random_access_indicator = (Input[5] & 0x40) >> 6;
         stream_priority_indicator = (Input[5] & 0x20) >> 5;
@@ -167,11 +170,14 @@ public:
             uint64_t basic = (tmp & 0xFFFFFFFF80000000) >> 31;
             uint64_t extension = (tmp & 0x1FF0000) >> 16;
             PCR_data = basic * 300 + extension;
+            Time = PCR_data / static_cast<long double>(TS::ExtendedClockFrequency_Hz);
+            Stuffing -= 6;
         }
         if(getOPCR())
         {
             uint64_t tmp = xSwapBytes64(*((uint64_t*)&Input[6 + getPCR() * 6]));
             OPCR_data = (tmp & 0xFFFFFFFFFFFF0000) >> 16;
+            Stuffing -= 6;
         }
 
 
@@ -188,10 +194,13 @@ public:
     bool getAFExt() const { return AFExt; }
     int getPCR_data() const { return PCR_data; }
     int getOPCR_data() const { return OPCR_data; }
+    double getTime() const { return static_cast<double>(Time); }
+    int getStuffing() const { return Stuffing;}
 //Printer
     void Print() const {
         //printf("AF: ");
         //printf("L=");
+        //if(!getPCR()) return;
         cout << "AF: L=";
         printf("%d ", getAFLength());
         //printf("DC=");
@@ -222,12 +231,18 @@ public:
         {
             cout << "PCR=";
             printf("%lld ", getPCR_data());
+            cout << "(Time=";
+            printf("%lf", getTime());
+            cout << "s) ";
         }
         if(getOPCR())
         {
             cout << "OPCR=";
             printf("%lld ", getOPCR_data());
         }
+        cout << "Stuffing=";
+        printf("%d", getStuffing());
+        //printf("\n");
     }
 };
 //=============================================================================================================================================================================
