@@ -11,6 +11,8 @@ int main( int argc, char *argv[ ], char *envp[ ])
     uint8_t packetBuffer[TS::TS_PacketLength];
     TS_PacketHeader  PacketHeader;
     TS_AdaptationField PacketAdaptationField;
+    //PES_PacketHeader PacketPES;
+    PES_Assembler PESAssembler;
     int32_t PacketId = 0;
     if(!stream.good())
     {
@@ -37,6 +39,18 @@ int main( int argc, char *argv[ ], char *envp[ ])
             //Print data Adaptation Field
             PacketAdaptationField.Print();
             //printf("\n");
+        }
+        if(PacketHeader.getPID() == 136){
+            //PacketPES.Parse(packetBuffer, PacketHeader, PacketAdaptationField);
+            //PacketPES.Print();
+            PES_Assembler::eResult Result = PESAssembler.AbsorbPacket(packetBuffer, &PacketHeader, &PacketAdaptationField);
+            switch (Result) {
+                case PES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
+                case PES_Assembler::eResult::AssemblingStarted : printf("Started "); PESAssembler.PrintPESH(); break;
+                case PES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
+                case PES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PESAssembler.getNumPacketBytes()); break;
+            }
+            printf("xd");
         }
 
         printf("\n");
