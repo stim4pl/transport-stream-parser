@@ -280,6 +280,8 @@ protected:
     uint16_t m_PacketLength;
     uint8_t m_HeaderLenght;
     uint8_t m_Header_Data_Lenght;
+    bool PTS_Flag = false;
+    bool DTS_Flag = false;
     uint64_t PTS;
     uint64_t DTS;
 public:
@@ -311,7 +313,8 @@ public:
                         DTS = 0;
                     }
                         break;
-                    case 1: break;
+                    case 1:
+                        break;
                     case 2: {
                         uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[5 + PacketAP.getAFLength() + 6 + 3]));
                         tmp1 = tmp1 >> 24;
@@ -319,6 +322,25 @@ public:
                         int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
                         int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
                         PTS = (tmp2 | tmp3 | tmp4);
+                        PTS_Flag = true;
+                    }
+                        break;
+                    case 3: {
+                        uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[5 + PacketAP.getAFLength() + 6 + 3]));
+                        tmp1 = tmp1 >> 24;
+                        uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
+                        int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                        int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
+                        PTS = (tmp2 | tmp3 | tmp4);
+                        PTS_Flag = true;
+
+                        tmp1 = xSwapBytes64(*((uint64_t *) &Packet[5 + PacketAP.getAFLength() + 6 + 3 + 5]));
+                        tmp1 = tmp1 >> 24;
+                        tmp2 = (tmp1 & 0xE00000000) >> 3;
+                        tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                        tmp4 = (tmp1 & 0xFFFE) >> 1;
+                        DTS = (tmp2 | tmp3 | tmp4);
+                        DTS_Flag = true;
                     }
                         break;
                 }
@@ -337,8 +359,10 @@ public:
         //printf("RA=");
         cout << "L=";
         printf("%lld ", getPacketLength());
-        printf("PTS= %lld ", PTS);
-        printf("(Time= %lfs)", static_cast<double>(PTS)/TS::BaseClockFrequency_Hz);
+        if(PTS_Flag)printf("PTS= %lld ", PTS);
+        if(PTS_Flag)printf("(Time= %lfs)", static_cast<double>(PTS) / TS::BaseClockFrequency_Hz);
+        if(DTS_Flag)printf("DTS= %lld ", DTS);
+        if(DTS_Flag)printf("(Time= %lfs)", static_cast<double>(DTS) / TS::BaseClockFrequency_Hz);
     };
 public:
 //PES packet header
