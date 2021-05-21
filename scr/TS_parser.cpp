@@ -48,9 +48,8 @@ int main( int argc, char *argv[ ], char *envp[ ])
                 case PES_Assembler::eResult::StreamPackedLost : printf("PcktLost "); break;
                 case PES_Assembler::eResult::AssemblingStarted : printf("Started "); PESAssembler.PrintPESH(); break;
                 case PES_Assembler::eResult::AssemblingContinue: printf("Continue "); break;
-                case PES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: Len=%d", PESAssembler.getNumPacketBytes()); break;
+                case PES_Assembler::eResult::AssemblingFinished: printf("Finished "); printf("PES: PcktLen=%d HeadLen=%d DataLen=%d", PESAssembler.getNumPacketBytes(), PESAssembler.getHeaderLen(), PESAssembler.getDataLen()); break;
             }
-            printf("xd");
         }
 
         printf("\n");

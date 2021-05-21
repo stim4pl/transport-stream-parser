@@ -256,7 +256,7 @@ public:
             printf("%lld ", getOPCR_data());
         }
         cout << "Stuffing=";
-        printf("%d", getStuffing());
+        printf("%d ", getStuffing());
         //printf("\n");
     }
 };
@@ -278,6 +278,10 @@ protected:
     uint32_t m_PacketStartCodePrefix;
     uint8_t m_StreamId;
     uint16_t m_PacketLength;
+    uint8_t m_HeaderLenght;
+    uint8_t m_Header_Data_Lenght;
+    uint64_t PTS;
+    uint64_t DTS;
 public:
     void Reset();
 
@@ -288,6 +292,37 @@ public:
             m_PacketStartCodePrefix = (tmp & 0xFFFFFF0000000000) >> 40;
             m_StreamId = (tmp & 0x000000FF00000000) >> 32;
             m_PacketLength = (tmp & 0x00000000FFFF0000) >> 16;
+            m_HeaderLenght = 6;
+            if (m_StreamId != eStreamId::eStreamId_program_stream_map,
+                    m_StreamId != eStreamId::eStreamId_padding_stream,
+                    m_StreamId != eStreamId::eStreamId_private_stream_2,
+                    m_StreamId != eStreamId::eStreamId_ECM,
+                    m_StreamId != eStreamId::eStreamId_EMM,
+                    m_StreamId != eStreamId::eStreamId_program_stream_directory,
+                    m_StreamId != eStreamId::eStreamId_DSMCC_stream,
+                    m_StreamId != eStreamId::eStreamId_ITUT_H222_1_type_E) {
+                m_Header_Data_Lenght = Packet[5 + PacketAP.getAFLength() + 6 + 2];
+                m_HeaderLenght += 3 + m_Header_Data_Lenght;
+                uint8_t PTSDTSFlag = (Packet[5 + PacketAP.getAFLength() + 6 + 1] & 0xC0) >> 6;
+                //printf("PTS: %d ", PTSDTSFlag);
+                switch (PTSDTSFlag) {
+                    case 0: {
+                        PTS = 0;
+                        DTS = 0;
+                    }
+                        break;
+                    case 1: break;
+                    case 2: {
+                        uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[5 + PacketAP.getAFLength() + 6 + 3]));
+                        tmp1 = tmp1 >> 24;
+                        uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
+                        int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                        int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
+                        PTS = (tmp2 | tmp3 | tmp4);
+                    }
+                        break;
+                }
+            }
         }
         return 0;
     };
@@ -302,6 +337,8 @@ public:
         //printf("RA=");
         cout << "L=";
         printf("%lld ", getPacketLength());
+        printf("PTS= %lld ", PTS);
+        printf("(Time= %lfs)", static_cast<double>(PTS)/TS::BaseClockFrequency_Hz);
     };
 public:
 //PES packet header
@@ -310,6 +347,8 @@ public:
     uint8_t getStreamId() const { return m_StreamId; }
 
     uint16_t getPacketLength() const { return m_PacketLength; }
+
+    uint8_t getHeaderLen() const { return m_HeaderLenght; }
 };
 
 class PES_Assembler {
@@ -326,8 +365,11 @@ protected:
     int32_t m_PID;
 //buffer
     uint8_t *m_Buffer;
+    uint8_t m_HeaderLen;
+    uint32_t m_DataLen;
     uint32_t m_BufferSize;
     uint32_t m_DataOffset;
+    uint32_t m_PES_A_Size;
 //operation
     int8_t m_LastContinuityCounter;
     bool m_Started = false;
@@ -342,18 +384,29 @@ public:
     eResult AbsorbPacket(const uint8_t *TransportStreamPacket, const TS_PacketHeader *PacketHeader,
                          const TS_AdaptationField *AdaptationField) {
         if (PacketHeader->getPID() == 136) {
+            //cout << "Dataoffset " << m_DataOffset << " m_PES_A_Size " << m_PES_A_Size << endl;
             m_PESH.Parse(TransportStreamPacket, *PacketHeader, *AdaptationField);
             if (PacketHeader->getPayloadUnitStartIndicator()) {
                 m_Started = true;
                 m_DataOffset = m_PESH.getPacketLength();
+                m_LastContinuityCounter = PacketHeader->getContinuityCounter();
+                m_PES_A_Size = 188 - 4 - 1 - AdaptationField->getAFLength();
+                m_HeaderLen = m_PESH.getHeaderLen();
                 return eResult::AssemblingStarted;
             } else {
-                if(PacketHeader->hasAdaptationField()){
+                if ((m_LastContinuityCounter + 1) != PacketHeader->getContinuityCounter())
+                    return eResult::StreamPackedLost;
+                if (PacketHeader->hasAdaptationField()) {
                     //m_PESH.Print();
-                    if(m_PESH.getPacketLength()==m_DataOffset) {
-                        m_DataOffset+=6;
-                        return eResult::AssemblingFinished; }
+                    m_PES_A_Size += 188 - 4 - 1 - AdaptationField->getAFLength();
+                    if (m_PES_A_Size >= m_DataOffset) {
+                        m_DataOffset = m_PES_A_Size;
+                        m_DataLen = m_DataOffset - m_HeaderLen;
+                        return eResult::AssemblingFinished;
+                    }
                 }
+                m_LastContinuityCounter = PacketHeader->getContinuityCounter();
+                m_PES_A_Size += 188 - 4;
                 return eResult::AssemblingContinue;
             }
         } else return eResult::UnexpectedPID;
@@ -365,6 +418,10 @@ public:
     uint8_t *getPacket() { return m_Buffer; }
 
     int32_t getNumPacketBytes() const { return m_DataOffset; }
+
+    int8_t getHeaderLen() const { return m_HeaderLen; }
+
+    int32_t getDataLen() const { return m_DataLen; }
 
 protected:
     void xBufferReset();
