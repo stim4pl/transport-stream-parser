@@ -412,7 +412,7 @@ public:
     };
 
     eResult AbsorbPacket(const uint8_t *TransportStreamPacket, const TS_PacketHeader *PacketHeader,
-                         const TS_AdaptationField *AdaptationField, const bool endAssembler) {
+                         const TS_AdaptationField *AdaptationField) {
         if (PacketHeader->getPID() == 136) {
             m_PESH.Parse(TransportStreamPacket, *PacketHeader, *AdaptationField);
             if (PacketHeader->getPayloadUnitStartIndicator()) {
@@ -420,24 +420,26 @@ public:
                 m_DataOffset = m_PESH.getPacketLength();
                 m_LastContinuityCounter = PacketHeader->getContinuityCounter();
                 m_HeaderLen = m_PESH.getHeaderLen();
-                m_BufferSize += m_DataLen;
+                if(PacketHeader->getPID() == 136)m_BufferSize = m_PESH.getPacketLength() - m_HeaderLen;
                 m_DataLen = TS::TS_PacketLength - TS::TS_HeaderLength - 1 - AdaptationField->getAFLength() - m_HeaderLen;
-                //printf("Start");
                 xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength + 1 + AdaptationField->getAFLength() + m_HeaderLen);
+                printf("Started ");
+                m_PESH.Print();
                 return eResult::AssemblingStarted;
             } else {
                 //if ((m_LastContinuityCounter + 1) != PacketHeader->getContinuityCounter())
                     //return eResult::StreamPackedLost;
                 if (PacketHeader->hasAdaptationField()) {
-                    //m_PESH.Print();
                     xBufferAppend(TransportStreamPacket,TS::TS_HeaderLength + 1 + AdaptationField->getAFLength());
                     m_DataLen += TS::TS_PacketLength - TS::TS_HeaderLength - 1 - AdaptationField->getAFLength();
                     //if (endAssembler) {
                     if (m_DataOffset>=m_PESH.getPacketLength()) {
                         m_DataOffset = m_DataLen + m_HeaderLen;
                         fwrite(m_Buffer, m_DataLen , 1, this->file);
-                        xBufferReset();
+                        //xBufferReset();
                         //printf("koniec");
+                        printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", getNumPacketBytes(),
+                              getHeaderLen(), getDataLen());
                         return eResult::AssemblingFinished;
                     }
                 }
@@ -467,15 +469,15 @@ public:
 
 protected:
     void xBufferReset(){
-        delete [] m_Buffer;
+        m_BufferSize = 0;
+        //delete [] m_Buffer;
         m_Buffer = nullptr;
         m_DataLen = 0;
-        m_BufferSize = 0;
     };
 
     void xBufferAppend(const uint8_t *Data, int32_t Size) {
         if (m_Buffer == nullptr) {
-            m_Buffer = new uint8_t[99999];
+            m_Buffer = new uint8_t[m_BufferSize];
             //printf("kurwa");
             copy(Data + Size, Data + TS::TS_PacketLength, m_Buffer);
             //printf("1");

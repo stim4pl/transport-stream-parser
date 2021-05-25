@@ -25,26 +25,26 @@ int main(int argc, char *argv[], char *envp[]) {
         return 0;
     }
 
-    stream.read((char *) packetBuffer, TS::TS_PacketLength);
-    PacketHeader.Parse(packetBuffer);
-    while (!stream.eof()) {
-        //printf("%010d ", PacketId);
-        //PacketHeader.Print();
 
-        if (!stream.eof()) {
-            stream.read((char *) packetBufferNext, TS::TS_PacketLength);
-            PacketHeaderNext.Parse(packetBufferNext);
-        } else endPackets = true;
+    while (!stream.eof()) {
+
+        stream.read((char *) packetBuffer, TS::TS_PacketLength);
+        PacketHeader.Parse(packetBuffer);
+
+        printf("%010d ", PacketId);
+        PacketHeader.Print();
+
+
 
         //Check Adaptation Field Control
         if (PacketHeader.hasAdaptationField()) {
             PacketAdaptationField.Parse(packetBuffer);
-            //PacketAdaptationField.Print();
+            PacketAdaptationField.Print();
         }
         if (PacketHeader.getPID() == 136) {
             endAssembler = (endPackets or PacketHeaderNext.getPayloadUnitStartIndicator());
             PES_Assembler::eResult Result = PESAssembler136.AbsorbPacket(packetBuffer, &PacketHeader,
-                                                                         &PacketAdaptationField, endAssembler);
+                                                                         &PacketAdaptationField);
             //printf("%010d ", PacketId);
             switch (Result) {
                 case PES_Assembler::eResult::StreamPackedLost :
@@ -55,21 +55,19 @@ int main(int argc, char *argv[], char *envp[]) {
                     //PESAssembler136.PrintPESH();
                     break;
                 case PES_Assembler::eResult::AssemblingContinue:
-                    //printf("Continue ");
+                    printf("Continue ");
                     break;
                 case PES_Assembler::eResult::AssemblingFinished:
                     //printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", PESAssembler136.getNumPacketBytes(),
-                     //      PESAssembler136.getHeaderLen(), PESAssembler136.getDataLen());
+                          //PESAssembler136.getHeaderLen(), PESAssembler136.getDataLen());
                     break;
             }
             //printf("\n");
         }
 
-        //printf("\n");
+        printf("\n");
 
         PacketId++;
-        PacketHeader = PacketHeaderNext;
-        copy(packetBufferNext, packetBufferNext + TS::TS_PacketLength, packetBuffer);
     }
     //printf("%d", PESAssembler136.getBufferSize());
     //fwrite(PESAssembler136.getPacket(),PESAssembler136.getDataInBuffer() , 1, PESAssembler136.file);
