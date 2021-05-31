@@ -19,6 +19,7 @@ int main(int argc, char *argv[], char *envp[]) {
     PESAssembler136.Init(136);
     PES_Assembler PESAssembler174;
     PESAssembler174.Init(174);
+    PES_Assembler::eResult Result;
     int32_t PacketId = 0;
     if (!stream.good()) {
         cout << "Error loading the file.";
@@ -41,10 +42,12 @@ int main(int argc, char *argv[], char *envp[]) {
             PacketAdaptationField.Parse(packetBuffer);
             //PacketAdaptationField.Print();
         }
-        if (PacketHeader.getPID() == 136) {
-            endAssembler = (endPackets or PacketHeaderNext.getPayloadUnitStartIndicator());
-            PES_Assembler::eResult Result = PESAssembler136.AbsorbPacket(packetBuffer, &PacketHeader,
+        if (PacketHeader.getPID() == 136)
+            Result = PESAssembler136.AbsorbPacket(packetBuffer, &PacketHeader,
                                                                          &PacketAdaptationField);
+        if (PacketHeader.getPID() == 174)
+            Result = PESAssembler174.AbsorbPacket(packetBuffer, &PacketHeader,
+                                                  &PacketAdaptationField);
             //printf("%010d ", PacketId);
             switch (Result) {
                 case PES_Assembler::eResult::StreamPackedLost :
@@ -63,7 +66,7 @@ int main(int argc, char *argv[], char *envp[]) {
                     break;
             }
             //printf("\n");
-        }
+
 
         //printf("\n");
 
@@ -71,7 +74,10 @@ int main(int argc, char *argv[], char *envp[]) {
     }
     //printf("%d", PESAssembler136.getBufferSize());
     //fwrite(PESAssembler136.getPacket(),PESAssembler136.getDataInBuffer() , 1, PESAssembler136.file);
+    PESAssembler136.write();
+    PESAssembler174.write();
     fclose(PESAssembler136.file);
+    fclose(PESAssembler174.file);
     stream.close();
     return 0;
 }
