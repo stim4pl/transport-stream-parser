@@ -423,8 +423,8 @@ public:
                 if(PacketHeader->getPID() == 136)m_BufferSize = m_PESH.getPacketLength() - m_HeaderLen;
                 m_DataLen = TS::TS_PacketLength - TS::TS_HeaderLength - 1 - AdaptationField->getAFLength() - m_HeaderLen;
                 xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength + 1 + AdaptationField->getAFLength() + m_HeaderLen);
-                printf("Started ");
-                m_PESH.Print();
+                //printf("Started ");
+                //m_PESH.Print();
                 return eResult::AssemblingStarted;
             } else {
                 //if ((m_LastContinuityCounter + 1) != PacketHeader->getContinuityCounter())
@@ -436,10 +436,10 @@ public:
                     if (m_DataOffset>=m_PESH.getPacketLength()) {
                         m_DataOffset = m_DataLen + m_HeaderLen;
                         fwrite(m_Buffer, m_DataLen , 1, this->file);
-                        //xBufferReset();
+                        xBufferReset();
                         //printf("koniec");
-                        printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", getNumPacketBytes(),
-                              getHeaderLen(), getDataLen());
+                        //printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", getNumPacketBytes(),
+                              //getHeaderLen(), getDataLen());
                         return eResult::AssemblingFinished;
                     }
                 }

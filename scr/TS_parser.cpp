@@ -31,15 +31,15 @@ int main(int argc, char *argv[], char *envp[]) {
         stream.read((char *) packetBuffer, TS::TS_PacketLength);
         PacketHeader.Parse(packetBuffer);
 
-        printf("%010d ", PacketId);
-        PacketHeader.Print();
+        //printf("%010d ", PacketId);
+        //PacketHeader.Print();
 
 
 
         //Check Adaptation Field Control
         if (PacketHeader.hasAdaptationField()) {
             PacketAdaptationField.Parse(packetBuffer);
-            PacketAdaptationField.Print();
+            //PacketAdaptationField.Print();
         }
         if (PacketHeader.getPID() == 136) {
             endAssembler = (endPackets or PacketHeaderNext.getPayloadUnitStartIndicator());
@@ -48,14 +48,14 @@ int main(int argc, char *argv[], char *envp[]) {
             //printf("%010d ", PacketId);
             switch (Result) {
                 case PES_Assembler::eResult::StreamPackedLost :
-                    printf("PcktLost ");
+                    //printf("PcktLost ");
                     break;
                 case PES_Assembler::eResult::AssemblingStarted :
                     //printf("Started ");
                     //PESAssembler136.PrintPESH();
                     break;
                 case PES_Assembler::eResult::AssemblingContinue:
-                    printf("Continue ");
+                    //printf("Continue ");
                     break;
                 case PES_Assembler::eResult::AssemblingFinished:
                     //printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", PESAssembler136.getNumPacketBytes(),
@@ -65,7 +65,7 @@ int main(int argc, char *argv[], char *envp[]) {
             //printf("\n");
         }
 
-        printf("\n");
+        //printf("\n");
 
         PacketId++;
     }
