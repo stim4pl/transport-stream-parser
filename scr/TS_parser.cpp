@@ -55,20 +55,20 @@ int main(int argc, char *argv[], char *envp[]) {
                     break;
                 case PES_Assembler::eResult::AssemblingStarted :
                     //printf("Started ");
-                    //PESAssembler136.PrintPESH();
+                    //if (PacketHeader.getPID() == 136) PESAssembler136.PrintPESH();
+                    //if (PacketHeader.getPID() == 174) PESAssembler174.PrintPESH();
                     break;
                 case PES_Assembler::eResult::AssemblingContinue:
                     //printf("Continue ");
                     break;
                 case PES_Assembler::eResult::AssemblingFinished:
-                    //printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d", PESAssembler136.getNumPacketBytes(),
-                          //PESAssembler136.getHeaderLen(), PESAssembler136.getDataLen());
+                    //printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d ", PESAssembler136.getBufferSize(),
+                    //PESAssembler136.getHeaderLen(), PESAssembler136.getBufferSize() - PESAssembler136.getHeaderLen());
                     break;
             }
             //printf("\n");
 
 
-        //printf("\n");
 
         PacketId++;
     }

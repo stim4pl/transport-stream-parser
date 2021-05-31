@@ -419,10 +419,8 @@ public:
             if (PacketHeader->getPayloadUnitStartIndicator()) {
                 if (m_Started) {
                     m_Started = false;
-                    m_PESH.Parse(m_Buffer);
-                    m_HeaderLen = m_PESH.getHeaderLen();
-                    m_PacketLen = m_DataInBuffor - 6;
-                    //printf(" PES: Previous was Finished of PES, Len=%4d ", m_BufferSize);
+                    //if(m_PID == 174)printf(" PES: Previous was Finished of PES, PcktLen=%d HeadLen=%d DataLen=%d ", getBufferSize(),
+                            //getHeaderLen(), getBufferSize() - getHeaderLen());
                     write();
                 }
 
@@ -434,6 +432,9 @@ public:
                     if (PacketHeader->getAdaptationFieldControl() == 3 and AdaptationField->getAFLength() < 183)
                         xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength +
                     1 + AdaptationField->getAFLength());
+                    m_PESH.Parse(m_Buffer);
+                    m_HeaderLen = m_PESH.getHeaderLen();
+                    m_PacketLen = m_PESH.getPacketLength();
                     return eResult::AssemblingStarted;
                 }
             } else {
@@ -441,8 +442,8 @@ public:
                 if(PacketHeader->getAdaptationFieldControl() == 3 and AdaptationField->getAFLength() < 183) {
                     xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength +
                                                          1 + AdaptationField->getAFLength());
-                    //printf(" Tutaj ");
                 }
+                if((m_PID == 136) and (m_PacketLen + 6 - m_HeaderLen) == (getBufferSize() - getHeaderLen())) return eResult::AssemblingFinished;
                 m_LastContinuityCounter++;
                 return eResult::AssemblingContinue;
             }
@@ -461,6 +462,9 @@ public:
     int32_t getDataLen() const { return m_DataLen; }
 
     uint32_t getBufferSize() const { return m_BufferSize; }
+
+    uint32_t getPckLen() const { return m_PacketLen;}
+
     void write() {fwrite(m_Buffer + m_HeaderLen, m_DataInBuffor - m_HeaderLen, 1, file);}
 
 protected:
