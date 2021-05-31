@@ -76,7 +76,6 @@ protected:
     uint8_t continuity_counter;
 
 public:
-    //void     Reset();
 //Packt Header Parser
     void Parse(const uint8_t *Input) {
         uint32_t header = _byteswap_ulong(*((uint32_t *) Input));
@@ -131,14 +130,13 @@ public:
     uint8_t getContinuityCounter() const { return continuity_counter; }
 
 public:
-    //TODO
     bool hasAdaptationField() const {
         if ((getAdaptationFieldControl() == 2) || (getAdaptationFieldControl() == 3)) {
             return true;
         }
         return false;
     }
-    //bool     hasPayload        () const { /*TODO*/ }
+
 };
 
 class TS_AdaptationField {
@@ -216,33 +214,22 @@ public:
 
 //Printer
     void Print() const {
-        //printf("AF: ");
-        //printf("L=");
-        //if(!getPCR()) return;
         cout << "AF: L=";
         printf("%d ", getAFLength());
-        //printf("DC=");
         cout << "DC=";
         printf("%d ", getDC());
-        //printf("RA=");
         cout << "RA=";
         printf("%d ", getRA());
-        //printf("SP=");
         cout << "SP=";
         printf("%d ", getSPI());
-        //printf("PR=");
         cout << "PR=";
         printf("%d ", getPCR());
-        //printf("OR=");
         cout << "OR=";
         printf("%d ", getOPCR());
-        //printf("SP=");
         cout << "SP=";
         printf("%d ", getSP());
-        //printf("TP=");
         cout << "TP=";
         printf("%d ", getTPD());
-        //printf("EX=");
         cout << "EX=";
         printf("%d ", getAFExt());
         if (getPCR()) {
@@ -258,7 +245,6 @@ public:
         }
         cout << "Stuffing=";
         printf("%d ", getStuffing());
-        //printf("\n");
     }
 };
 
@@ -290,7 +276,6 @@ public:
 
     int32_t Parse(const uint8_t *Packet) {
             uint64_t tmp = xSwapBytes64(*((uint64_t *) &Packet[0]));
-            //uint64_t tmp = *((uint64_t *) Packet);
             m_PacketStartCodePrefix = (tmp & 0xFFFFFF0000000000) >> 40;
             m_StreamId = (tmp & 0x000000FF00000000) >> 32;
             m_PacketLength = (tmp & 0x00000000FFFF0000) >> 16;
@@ -306,7 +291,6 @@ public:
                 m_Header_Data_Lenght = Packet[6 + 2];
                 m_HeaderLenght += 3 + m_Header_Data_Lenght;
                 uint8_t PTSDTSFlag = (Packet[6 + 1] & 0xC0) >> 6;
-                //printf("PTS: %d ", PTSDTSFlag);
                 switch (PTSDTSFlag) {
                     case 0: {
                         PTS = 0;
@@ -351,11 +335,8 @@ public:
     void Print() const {
         cout << "PES: PSCP=";
         printf("%lld ", getPacketStartCodePrefix());
-        //printf("%lld ", 1);
-        //printf("DC=");
         cout << "SID=";
         printf("%lld ", getStreamId());
-        //printf("RA=");
         cout << "L=";
         printf("%lld ", getPacketLength());
         if (PTS_Flag)printf("PTS= %lld ", PTS);
@@ -391,7 +372,6 @@ protected:
     uint8_t *m_Buffer = new uint8_t[0];
     uint8_t *m_BufferTmp = new uint8_t[0];
     uint32_t m_DataInBuffor = 0;
-    uint8_t BorrowBits = 0;
     uint8_t m_HeaderLen;
     uint32_t m_PacketLen;
     uint32_t m_DataLen = 0;
@@ -451,19 +431,9 @@ public:
         return eResult::AssemblingStarted;
     };
 
-    void PrintPESH() const { m_PESH.Print(); }
-
-    uint8_t *getPacket() { return m_Buffer; }
-
-    int32_t getNumPacketBytes() const { return m_DataOffset; }
-
     int8_t getHeaderLen() const { return m_HeaderLen; }
 
-    int32_t getDataLen() const { return m_DataLen; }
-
     uint32_t getBufferSize() const { return m_BufferSize; }
-
-    uint32_t getPckLen() const { return m_PacketLen;}
 
     void write() {fwrite(m_Buffer + m_HeaderLen, m_DataInBuffor - m_HeaderLen, 1, file);}
 

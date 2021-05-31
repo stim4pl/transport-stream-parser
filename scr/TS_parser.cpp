@@ -9,12 +9,8 @@ int main(int argc, char *argv[], char *envp[]) {
     fstream stream;
     stream.open("scr/input_files/example_new.ts", ios::in | ios::binary);
     uint8_t packetBuffer[TS::TS_PacketLength];
-    uint8_t packetBufferNext[TS::TS_PacketLength];
     TS_PacketHeader PacketHeader;
-    TS_PacketHeader PacketHeaderNext;
     TS_AdaptationField PacketAdaptationField;
-    bool endPackets = false;
-    bool endAssembler = false;
     PES_Assembler PESAssembler136;
     PESAssembler136.Init(136);
     PES_Assembler PESAssembler174;
@@ -37,7 +33,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
 
 
-        //Check Adaptation Field Control
         if (PacketHeader.hasAdaptationField()) {
             PacketAdaptationField.Parse(packetBuffer);
             //PacketAdaptationField.Print();
@@ -72,8 +67,6 @@ int main(int argc, char *argv[], char *envp[]) {
 
         PacketId++;
     }
-    //printf("%d", PESAssembler136.getBufferSize());
-    //fwrite(PESAssembler136.getPacket(),PESAssembler136.getDataInBuffer() , 1, PESAssembler136.file);
     PESAssembler136.write();
     PESAssembler174.write();
     fclose(PESAssembler136.file);
