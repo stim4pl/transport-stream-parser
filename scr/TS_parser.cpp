@@ -5,6 +5,7 @@
 using namespace std;
 
 int main(int argc, char *argv[], char *envp[]) {
+    freopen("out.txt", "w", stdout); //Save output to file
     fstream stream;
     stream.open("scr/input_files/example_new.ts", ios::in | ios::binary);
     uint8_t packetBuffer[TS::TS_PacketLength];
@@ -35,30 +36,36 @@ int main(int argc, char *argv[], char *envp[]) {
             PacketAdaptationField.Parse(packetBuffer);
             PacketAdaptationField.Print();
         }
-        if (PacketHeader.getPID() == 136)
+        if (PacketHeader.getPID() == 136) {
             Result = PESAssembler136.AbsorbPacket(packetBuffer, &PacketHeader,
                                                   &PacketAdaptationField);
+        }
         if (PacketHeader.getPID() == 174)
             Result = PESAssembler174.AbsorbPacket(packetBuffer, &PacketHeader,
                                                   &PacketAdaptationField);
-        printf("%010d ", PacketId);
-        switch (Result) {
-            case PES_Assembler::eResult::StreamPackedLost :
-                printf("PcktLost ");
-                break;
-            case PES_Assembler::eResult::AssemblingStarted :
-                printf("Started ");
-                if (PacketHeader.getPID() == 136) PESAssembler136.PrintPESH();
-                if (PacketHeader.getPID() == 174) PESAssembler174.PrintPESH();
-                break;
-            case PES_Assembler::eResult::AssemblingContinue:
-                printf("Continue ");
-                break;
-            case PES_Assembler::eResult::AssemblingFinished:
-                printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d ", PESAssembler136.getBufferSize(),
-                       PESAssembler136.getHeaderLen(),
-                       PESAssembler136.getBufferSize() - PESAssembler136.getHeaderLen());
-                break;
+        if((PacketHeader.getPID() == 136) or (PacketHeader.getPID() == 174)){
+            switch (Result) {
+                case PES_Assembler::eResult::StreamPackedLost :
+                    printf("PcktLost ");
+                    break;
+                case PES_Assembler::eResult::AssemblingStarted :
+                    printf("Started ");
+                    if (PacketHeader.getPID() == 136) PESAssembler136.PrintPESH();
+                    if (PacketHeader.getPID() == 174) PESAssembler174.PrintPESH();
+                    break;
+                case PES_Assembler::eResult::AssemblingContinue:
+                    printf("Continue ");
+                    break;
+                case PES_Assembler::eResult::AssemblingFinished:
+                    printf("Finished PES: PcktLen=%d HeadLen=%d DataLen=%d ", PESAssembler136.getBufferSize(),
+                           PESAssembler136.getHeaderLen(),
+                           PESAssembler136.getBufferSize() - PESAssembler136.getHeaderLen());
+                    break;
+                case PES_Assembler::eResult::UnexpectedPID:
+                    break;
+                default:
+                    break;
+            }
         }
         printf("\n");
 

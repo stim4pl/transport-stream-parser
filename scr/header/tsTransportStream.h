@@ -367,7 +367,6 @@ public:
     FILE *file;
 protected:
 //setup
-    int32_t m_PID;
 //buffer
     uint8_t *m_Buffer = new uint8_t[0];
     uint8_t *m_BufferTmp = new uint8_t[0];
@@ -381,6 +380,7 @@ protected:
     bool m_Started = false;
     PES_PacketHeader m_PESH;
 public:
+    int32_t m_PID;
     PES_Assembler() {};
 
     ~PES_Assembler() {};
@@ -423,7 +423,7 @@ public:
                     xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength +
                                                          1 + AdaptationField->getAFLength());
                 }
-                if ((m_PID == 136) and (m_PacketLen + 6 - m_HeaderLen) == (getBufferSize() - getHeaderLen()))
+                if ((m_PID == 136) and ((m_PacketLen + 6 - m_HeaderLen) == (getBufferSize() - getHeaderLen())))
                     return eResult::AssemblingFinished;
                 m_LastContinuityCounter++;
                 return eResult::AssemblingContinue;
