@@ -5,7 +5,6 @@
 using namespace std;
 
 int main(int argc, char *argv[], char *envp[]) {
-    // TODO - open file
     fstream stream;
     stream.open("scr/input_files/example_new.ts", ios::in | ios::binary);
     uint8_t packetBuffer[TS::TS_PacketLength];

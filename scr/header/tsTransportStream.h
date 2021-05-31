@@ -374,9 +374,7 @@ protected:
     uint32_t m_DataInBuffor = 0;
     uint8_t m_HeaderLen;
     uint32_t m_PacketLen;
-    uint32_t m_DataLen = 0;
     uint32_t m_BufferSize = 0;
-    uint32_t m_DataOffset;
 
 //operation
     int8_t m_LastContinuityCounter = 0;
@@ -431,6 +429,8 @@ public:
         return eResult::AssemblingStarted;
     };
 
+    void PrintPESH() const { m_PESH.Print(); }
+
     int8_t getHeaderLen() const { return m_HeaderLen; }
 
     uint32_t getBufferSize() const { return m_BufferSize; }
@@ -443,7 +443,6 @@ protected:
         m_DataInBuffor = 0;
         delete[] m_Buffer;
         m_Buffer = new uint8_t[0];
-        m_DataLen = 0;
     };
 
     void xBufferAppend(const uint8_t *Data, int32_t Size) {
