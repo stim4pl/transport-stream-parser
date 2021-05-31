@@ -275,60 +275,60 @@ public:
     void Reset();
 
     int32_t Parse(const uint8_t *Packet) {
-            uint64_t tmp = xSwapBytes64(*((uint64_t *) &Packet[0]));
-            m_PacketStartCodePrefix = (tmp & 0xFFFFFF0000000000) >> 40;
-            m_StreamId = (tmp & 0x000000FF00000000) >> 32;
-            m_PacketLength = (tmp & 0x00000000FFFF0000) >> 16;
-            m_HeaderLenght = 6;
-            if (m_StreamId != eStreamId::eStreamId_program_stream_map,
-                    m_StreamId != eStreamId::eStreamId_padding_stream,
-                    m_StreamId != eStreamId::eStreamId_private_stream_2,
-                    m_StreamId != eStreamId::eStreamId_ECM,
-                    m_StreamId != eStreamId::eStreamId_EMM,
-                    m_StreamId != eStreamId::eStreamId_program_stream_directory,
-                    m_StreamId != eStreamId::eStreamId_DSMCC_stream,
-                    m_StreamId != eStreamId::eStreamId_ITUT_H222_1_type_E) {
-                m_Header_Data_Lenght = Packet[6 + 2];
-                m_HeaderLenght += 3 + m_Header_Data_Lenght;
-                uint8_t PTSDTSFlag = (Packet[6 + 1] & 0xC0) >> 6;
-                switch (PTSDTSFlag) {
-                    case 0: {
-                        PTS = 0;
-                        DTS = 0;
-                    }
-                        break;
-                    case 1:
-                        break;
-                    case 2: {
-                        uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[+ 6 + 3]));
-                        tmp1 = tmp1 >> 24;
-                        uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
-                        int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
-                        int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
-                        PTS = (tmp2 | tmp3 | tmp4);
-                        PTS_Flag = true;
-                    }
-                        break;
-                    case 3: {
-                        uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[6 + 3]));
-                        tmp1 = tmp1 >> 24;
-                        uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
-                        int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
-                        int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
-                        PTS = (tmp2 | tmp3 | tmp4);
-                        PTS_Flag = true;
-
-                        tmp1 = xSwapBytes64(*((uint64_t *) &Packet[6 + 3 + 5]));
-                        tmp1 = tmp1 >> 24;
-                        tmp2 = (tmp1 & 0xE00000000) >> 3;
-                        tmp3 = (tmp1 & 0xFFFE0000) >> 2;
-                        tmp4 = (tmp1 & 0xFFFE) >> 1;
-                        DTS = (tmp2 | tmp3 | tmp4);
-                        DTS_Flag = true;
-                    }
-                        break;
+        uint64_t tmp = xSwapBytes64(*((uint64_t *) &Packet[0]));
+        m_PacketStartCodePrefix = (tmp & 0xFFFFFF0000000000) >> 40;
+        m_StreamId = (tmp & 0x000000FF00000000) >> 32;
+        m_PacketLength = (tmp & 0x00000000FFFF0000) >> 16;
+        m_HeaderLenght = 6;
+        if (m_StreamId != eStreamId::eStreamId_program_stream_map,
+                m_StreamId != eStreamId::eStreamId_padding_stream,
+                m_StreamId != eStreamId::eStreamId_private_stream_2,
+                m_StreamId != eStreamId::eStreamId_ECM,
+                m_StreamId != eStreamId::eStreamId_EMM,
+                m_StreamId != eStreamId::eStreamId_program_stream_directory,
+                m_StreamId != eStreamId::eStreamId_DSMCC_stream,
+                m_StreamId != eStreamId::eStreamId_ITUT_H222_1_type_E) {
+            m_Header_Data_Lenght = Packet[6 + 2];
+            m_HeaderLenght += 3 + m_Header_Data_Lenght;
+            uint8_t PTSDTSFlag = (Packet[6 + 1] & 0xC0) >> 6;
+            switch (PTSDTSFlag) {
+                case 0: {
+                    PTS = 0;
+                    DTS = 0;
                 }
+                    break;
+                case 1:
+                    break;
+                case 2: {
+                    uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[+6 + 3]));
+                    tmp1 = tmp1 >> 24;
+                    uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
+                    int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                    int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
+                    PTS = (tmp2 | tmp3 | tmp4);
+                    PTS_Flag = true;
+                }
+                    break;
+                case 3: {
+                    uint64_t tmp1 = xSwapBytes64(*((uint64_t *) &Packet[6 + 3]));
+                    tmp1 = tmp1 >> 24;
+                    uint64_t tmp2 = (tmp1 & 0xE00000000) >> 3;
+                    int64_t tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                    int64_t tmp4 = (tmp1 & 0xFFFE) >> 1;
+                    PTS = (tmp2 | tmp3 | tmp4);
+                    PTS_Flag = true;
+
+                    tmp1 = xSwapBytes64(*((uint64_t *) &Packet[6 + 3 + 5]));
+                    tmp1 = tmp1 >> 24;
+                    tmp2 = (tmp1 & 0xE00000000) >> 3;
+                    tmp3 = (tmp1 & 0xFFFE0000) >> 2;
+                    tmp4 = (tmp1 & 0xFFFE) >> 1;
+                    DTS = (tmp2 | tmp3 | tmp4);
+                    DTS_Flag = true;
+                }
+                    break;
             }
+        }
         return 0;
     };
 
@@ -397,8 +397,9 @@ public:
             if (PacketHeader->getPayloadUnitStartIndicator()) {
                 if (m_Started) {
                     m_Started = false;
-                    //if(m_PID == 174)printf(" PES: Previous was Finished of PES, PcktLen=%d HeadLen=%d DataLen=%d ", getBufferSize(),
-                            //getHeaderLen(), getBufferSize() - getHeaderLen());
+                    if (m_PID == 174)
+                        printf(" PES: Previous was Finished of PES, PcktLen=%d HeadLen=%d DataLen=%d ", getBufferSize(),
+                               getHeaderLen(), getBufferSize() - getHeaderLen());
                     write();
                 }
 
@@ -409,19 +410,21 @@ public:
                         xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength);
                     if (PacketHeader->getAdaptationFieldControl() == 3 and AdaptationField->getAFLength() < 183)
                         xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength +
-                    1 + AdaptationField->getAFLength());
+                                                             1 + AdaptationField->getAFLength());
                     m_PESH.Parse(m_Buffer);
                     m_HeaderLen = m_PESH.getHeaderLen();
                     m_PacketLen = m_PESH.getPacketLength();
                     return eResult::AssemblingStarted;
                 }
             } else {
-                if(PacketHeader->getAdaptationFieldControl() == 1) xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength);
-                if(PacketHeader->getAdaptationFieldControl() == 3 and AdaptationField->getAFLength() < 183) {
+                if (PacketHeader->getAdaptationFieldControl() == 1)
+                    xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength);
+                if (PacketHeader->getAdaptationFieldControl() == 3 and AdaptationField->getAFLength() < 183) {
                     xBufferAppend(TransportStreamPacket, TS::TS_HeaderLength +
                                                          1 + AdaptationField->getAFLength());
                 }
-                if((m_PID == 136) and (m_PacketLen + 6 - m_HeaderLen) == (getBufferSize() - getHeaderLen())) return eResult::AssemblingFinished;
+                if ((m_PID == 136) and (m_PacketLen + 6 - m_HeaderLen) == (getBufferSize() - getHeaderLen()))
+                    return eResult::AssemblingFinished;
                 m_LastContinuityCounter++;
                 return eResult::AssemblingContinue;
             }
@@ -435,7 +438,7 @@ public:
 
     uint32_t getBufferSize() const { return m_BufferSize; }
 
-    void write() {fwrite(m_Buffer + m_HeaderLen, m_DataInBuffor - m_HeaderLen, 1, file);}
+    void write() { fwrite(m_Buffer + m_HeaderLen, m_DataInBuffor - m_HeaderLen, 1, file); }
 
 protected:
     void xBufferReset() {
